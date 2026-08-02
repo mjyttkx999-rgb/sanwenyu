@@ -1,9 +1,9 @@
-const CACHE_NAME = "shiguang-workbench-v2";
+const CACHE_NAME = "shiguang-workbench-v8";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
+  "./styles.css?v=7",
+  "./app.js?v=7",
   "./manifest.webmanifest",
   "./icons/icon-180.png",
   "./icons/icon-192.png",
