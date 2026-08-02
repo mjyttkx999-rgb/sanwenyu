@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#faf7f2" />
+    <meta name="description" content="每日总结、任务、记账、内容灵感与文档归档的一体化手机工作台。" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="拾光工作台" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>拾光工作台</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="todayDate">7月31日 · 星期五</p>
+          <h1 id="pageTitle">下午好，<span id="greetingName">林夏</span></h1>
+        </div>
+        <button class="icon-button avatar-button" data-action="open-profile" aria-label="打开个人资料">
+          <span id="avatarInitial">林</span>
+          <i class="status-dot"></i>
+        </button>
+      </header>
+
+      <main id="appMain">
+        <section class="view active" data-view="home">
+          <div class="focus-band">
+            <div class="focus-copy">
+              <div class="focus-label"><i data-lucide="zap"></i> 今日聚焦</div>
+              <h2>把最重要的事，<br />先向前推一步。</h2>
+              <p><strong id="focusCount">3</strong> 项关键任务 · <span id="focusDone">1</span> 项已完成</p>
+            </div>
+            <div class="progress-ring" id="homeRing" style="--progress: 33">
+              <div><strong>33%</strong><span>今日</span></div>
+            </div>
+          </div>
+
+          <section class="section-block home-todos">
+            <div class="section-heading">
+              <div>
+                <p class="kicker">优先处理</p>
+                <h2>今日待办</h2>
+              </div>
+              <button class="text-button" data-route="tasks">查看全部 <i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="compact-list" id="homeTodoList"></div>
+          </section>
+
+          <section class="section-block">
+            <div class="section-heading">
+              <div>
+                <p class="kicker">你的空间</p>
+                <h2>工作台</h2>
+              </div>
+              <span class="subtle-text">7 个模块</span>
+            </div>
+            <div class="module-grid">
+              <button class="module-tile teal" data-module="summary">
+                <span class="module-icon"><i data-lucide="clipboard-check"></i></span>
+                <span><strong>每日总结</strong><small>团队 6/8 已提交</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+              <button class="module-tile amber" data-route="tasks">
+                <span class="module-icon"><i data-lucide="list-checks"></i></span>
+                <span><strong>待完成事项</strong><small id="moduleTodoCount">4 项待处理</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+              <button class="module-tile coral" data-module="progress">
+                <span class="module-icon"><i data-lucide="chart-no-axes-column-increasing"></i></span>
+                <span><strong>任务进行中</strong><small>2 个卡点待处理</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+              <button class="module-tile blue" data-module="ledger">
+                <span class="module-icon"><i data-lucide="wallet-cards"></i></span>
+                <span><strong>实时记账</strong><small>本月结余 ¥8,420</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+              <button class="module-tile rose" data-module="copy">
+                <span class="module-icon"><i data-lucide="sparkles"></i></span>
+                <span><strong>爆款文案</strong><small>灵感库已更新</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+              <button class="module-tile ink" data-module="poetry">
+                <span class="module-icon"><i data-lucide="feather"></i></span>
+                <span><strong>每日诗词</strong><small>今日 · 《山居秋暝》</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+              <button class="module-tile green wide" data-module="docs">
+                <span class="module-icon"><i data-lucide="folder-archive"></i></span>
+                <span><strong>文档归档</strong><small>图片、Word、Excel、PPT · 同步至 WPS</small></span>
+                <i data-lucide="arrow-up-right" class="corner-icon"></i>
+              </button>
+            </div>
+          </section>
+
+          <section class="section-block insight-strip">
+            <div class="section-heading">
+              <div>
+                <p class="kicker">工作洞察</p>
+                <h2>本周节奏</h2>
+              </div>
+              <span class="trend-up"><i data-lucide="trending-up"></i> 12%</span>
+            </div>
+            <div class="week-chart" aria-label="本周任务完成趋势图">
+              <div><i style="--h: 42%"></i><span>一</span></div>
+              <div><i style="--h: 58%"></i><span>二</span></div>
+              <div><i style="--h: 46%"></i><span>三</span></div>
+              <div><i style="--h: 78%"></i><span>四</span></div>
+              <div class="today"><i style="--h: 64%"></i><span>五</span></div>
+              <div><i style="--h: 30%"></i><span>六</span></div>
+              <div><i style="--h: 20%"></i><span>日</span></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" data-view="tasks">
+          <div class="page-intro">
+            <div>
+              <p class="kicker">保持清晰</p>
+              <h2>待完成事项</h2>
+              <p>先处理真正影响结果的任务。</p>
+            </div>
+            <button class="primary-icon-button" data-action="add-todo" aria-label="新建待办"><i data-lucide="plus"></i></button>
+          </div>
+
+          <div class="task-summary-row">
+            <div><span>待完成</span><strong id="taskPendingCount">4</strong></div>
+            <div><span>P0 紧急</span><strong id="taskP0Count">1</strong></div>
+            <div><span>今日完成</span><strong id="taskDoneCount">1</strong></div>
+          </div>
+
+          <div class="segmented" id="taskFilters" role="tablist">
+            <button class="active" data-filter="all">全部</button>
+            <button data-filter="P0">P0</button>
+            <button data-filter="P1">P1</button>
+            <button data-filter="done">已完成</button>
+          </div>
+
+          <div class="task-list" id="taskList"></div>
+        </section>
+
+        <section class="view" data-view="tools">
+          <div class="page-intro">
+            <div>
+              <p class="kicker">常用工具</p>
+              <h2>灵感与效率</h2>
+              <p>把内容、知识和文件收进一个地方。</p>
+            </div>
+          </div>
+          <div class="tool-list">
+            <button class="tool-row" data-module="copy"><span class="tool-visual rose"><i data-lucide="sparkles"></i></span><span><strong>爆款文案提取</strong><small>按场景寻找朋友圈灵感</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="tool-row" data-module="poetry"><span class="tool-visual ink"><i data-lucide="feather"></i></span><span><strong>每日古诗词</strong><small>原文、译注与赏析</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="tool-row" data-module="docs"><span class="tool-visual green"><i data-lucide="folder-archive"></i></span><span><strong>文档归档</strong><small>标签分类并同步 WPS</small></span><i data-lucide="chevron-right"></i></button>
+            <button class="tool-row" data-module="ledger"><span class="tool-visual blue"><i data-lucide="wallet-cards"></i></span><span><strong>个人记账</strong><small>实时记录每日收支</small></span><i data-lucide="chevron-right"></i></button>
+          </div>
+          <section class="quick-capture">
+            <p class="kicker">快速记录</p>
+            <h3>此刻有什么想法？</h3>
+            <textarea id="quickNote" placeholder="记下灵感、卡点或稍后要处理的事…"></textarea>
+            <button class="button secondary" data-action="save-note"><i data-lucide="archive"></i> 收进灵感箱</button>
+          </section>
+        </section>
+
+        <section class="view" data-view="mine">
+          <div class="profile-hero">
+            <div class="profile-avatar" id="mineAvatar">林</div>
+            <div><p class="kicker">个人空间</p><h2 id="mineName">林夏</h2><p id="mineRole">内容运营组 · 负责人</p></div>
+            <button class="icon-button" id="mineSettingsBtn" aria-label="设置" data-action="open-profile-page"><i data-lucide="settings-2"></i></button>
+          </div>
+          <div class="profile-stats">
+            <div><strong>86%</strong><span>本周完成率</span></div>
+            <div><strong>6</strong><span>连续记录天数</span></div>
+            <div><strong>24</strong><span>归档文档</span></div>
+          </div>
+          <div class="settings-list">
+            <button class="setting-item" data-action="open-profile-page"><i data-lucide="user-cog"></i><span><strong>个人工作台</strong><small>编辑资料、账号设置与数据管理</small></span><i data-lucide="chevron-right"></i></button>
+            <button><i data-lucide="bell-ring"></i><span><strong>提醒设置</strong><small>任务提前 30 分钟提醒</small></span><i data-lucide="chevron-right"></i></button>
+            <button><i data-lucide="users"></i><span><strong>团队与群组</strong><small>内容运营组 · 8 人</small></span><i data-lucide="chevron-right"></i></button>
+            <button><i data-lucide="database"></i><span><strong>数据与同步</strong><small>本地数据 · WPS 待授权</small></span><i data-lucide="chevron-right"></i></button>
+            <button><i data-lucide="shield-check"></i><span><strong>隐私与安全</strong><small>锁屏保护、数据导出</small></span><i data-lucide="chevron-right"></i></button>
+          </div>
+        </section>
+
+        <section class="view" data-view="profile">
+          <div class="profile-view-header">
+            <div>
+              <p class="eyebrow">个人空间</p>
+              <h1>我的资料</h1>
+            </div>
+            <button class="icon-button" data-action="back-to-mine" aria-label="返回">
+              <i data-lucide="chevron-left"></i>
+            </button>
+          </div>
+
+          <!-- 个人资料卡片 -->
+          <section class="profile-card">
+            <div class="profile-header">
+              <div class="avatar-wrapper">
+                <div class="profile-avatar" id="profileAvatar">林</div>
+                <button class="avatar-edit" id="avatarEditBtn" aria-label="更换头像">
+                  <i data-lucide="camera"></i>
+                </button>
+                <input type="file" id="avatarInput" accept="image/*" hidden />
+              </div>
+
+              <div class="profile-info">
+                <!-- 用户名显示模式 -->
+                <div class="name-display" id="nameDisplay">
+                  <h2 id="userName">林夏</h2>
+                  <button class="edit-name-btn" id="editNameBtn" aria-label="编辑用户名">
+                    <i data-lucide="pencil"></i>
+                  </button>
+                </div>
+
+                <!-- 用户名编辑模式 -->
+                <div class="name-edit" id="nameEdit" hidden>
+                  <input
+                    type="text"
+                    id="nameInput"
+                    maxlength="12"
+                    placeholder="输入用户名"
+                    autocomplete="off"
+                  />
+                  <div class="edit-actions">
+                    <button class="edit-btn save" id="saveNameBtn" aria-label="保存">
+                      <i data-lucide="check"></i>
+                    </button>
+                    <button class="edit-btn cancel" id="cancelNameBtn" aria-label="取消">
+                      <i data-lucide="x"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <p class="profile-role" id="userRole">内容运营组 · 负责人</p>
+              </div>
+            </div>
+
+            <div class="profile-meta">
+              <div class="meta-item">
+                <i data-lucide="mail"></i>
+                <span id="userEmail">linxia@example.com</span>
+              </div>
+              <div class="meta-item">
+                <i data-lucide="calendar"></i>
+                <span>加入于 2024年3月</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 统计数据 -->
+          <section class="stats-section">
+            <div class="stat-card">
+              <strong id="statCompletion">86%</strong>
+              <span>本周完成率</span>
+            </div>
+            <div class="stat-card">
+              <strong id="statStreak">6</strong>
+              <span>连续记录天数</span>
+            </div>
+            <div class="stat-card">
+              <strong id="statDocs">24</strong>
+              <span>归档文档</span>
+            </div>
+            <div class="stat-card">
+              <strong id="statTasks">42</strong>
+              <span>已完成任务</span>
+            </div>
+          </section>
+
+          <!-- 账号设置 -->
+          <section class="settings-group">
+            <h3 class="group-title">账号设置</h3>
+            <div class="settings-list">
+              <button class="setting-item" id="editRoleBtn">
+                <span class="setting-icon teal"><i data-lucide="briefcase"></i></span>
+                <span class="setting-text">
+                  <strong>职位信息</strong>
+                  <small id="roleText">内容运营组 · 负责人</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+              <button class="setting-item" id="editEmailBtn">
+                <span class="setting-icon blue"><i data-lucide="mail"></i></span>
+                <span class="setting-text">
+                  <strong>邮箱地址</strong>
+                  <small id="emailText">linxia@example.com</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+              <button class="setting-item">
+                <span class="setting-icon amber"><i data-lucide="bell-ring"></i></span>
+                <span class="setting-text">
+                  <strong>提醒设置</strong>
+                  <small>任务提前 30 分钟提醒</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+            </div>
+          </section>
+
+          <!-- 数据与隐私 -->
+          <section class="settings-group">
+            <h3 class="group-title">数据与隐私</h3>
+            <div class="settings-list">
+              <button class="setting-item">
+                <span class="setting-icon green"><i data-lucide="database"></i></span>
+                <span class="setting-text">
+                  <strong>数据与同步</strong>
+                  <small>本地数据 · WPS 待授权</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+              <button class="setting-item">
+                <span class="setting-icon coral"><i data-lucide="shield-check"></i></span>
+                <span class="setting-text">
+                  <strong>隐私与安全</strong>
+                  <small>锁屏保护、数据导出</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+              <button class="setting-item">
+                <span class="setting-icon ink"><i data-lucide="download"></i></span>
+                <span class="setting-text">
+                  <strong>导出数据</strong>
+                  <small>备份任务、记账与文档记录</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+            </div>
+          </section>
+
+          <!-- 团队信息 -->
+          <section class="settings-group">
+            <h3 class="group-title">团队</h3>
+            <div class="settings-list">
+              <button class="setting-item">
+                <span class="setting-icon rose"><i data-lucide="users"></i></span>
+                <span class="setting-text">
+                  <strong>团队与群组</strong>
+                  <small>内容运营组 · 8 人</small>
+                </span>
+                <i data-lucide="chevron-right" class="setting-arrow"></i>
+              </button>
+            </div>
+          </section>
+
+          <!-- 版本信息 -->
+          <section class="version-info">
+            <p>拾光工作台 v1.0.0</p>
+            <p>数据仅存储于本地设备</p>
+          </section>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="主导航">
+        <button class="active" data-route="home"><i data-lucide="house"></i><span>今天</span></button>
+        <button data-route="tasks"><i data-lucide="circle-check-big"></i><span>任务</span><b id="taskBadge">4</b></button>
+        <button class="capture-button" data-action="quick-add" aria-label="快速新增"><i data-lucide="plus"></i></button>
+        <button data-route="tools"><i data-lucide="layout-grid"></i><span>工具</span></button>
+        <button data-route="mine"><i data-lucide="user-round"></i><span>我的</span></button>
+      </nav>
+    </div>
+
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+
+    <section class="bottom-sheet" id="moduleSheet" aria-modal="true" role="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <button class="icon-button" data-action="close-sheet" aria-label="关闭"><i data-lucide="x"></i></button>
+        <div><p class="kicker" id="sheetKicker">模块</p><h2 id="sheetTitle">每日总结</h2></div>
+        <button class="icon-button" id="sheetAction" aria-label="更多操作"><i data-lucide="ellipsis"></i></button>
+      </div>
+      <div class="sheet-content" id="sheetContent"></div>
+    </section>
+
+    <section class="bottom-sheet compact-sheet" id="formSheet" aria-modal="true" role="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <button class="icon-button" data-action="close-form" aria-label="关闭"><i data-lucide="x"></i></button>
+        <div><p class="kicker">快速创建</p><h2 id="formTitle">新增待办</h2></div>
+        <span class="sheet-spacer"></span>
+      </div>
+      <form class="entry-form" id="entryForm"></form>
+    </section>
+
+    <section class="bottom-sheet" id="editSheet" aria-modal="true" role="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <button class="icon-button" data-action="close-sheet" aria-label="关闭"><i data-lucide="x"></i></button>
+        <div>
+          <p class="kicker" id="editSheetKicker">编辑</p>
+          <h2 id="editSheetTitle">修改信息</h2>
+        </div>
+        <span class="sheet-spacer"></span>
+      </div>
+      <form class="entry-form" id="editForm">
+        <div class="field">
+          <label for="editInput" id="editLabel">内容</label>
+          <input type="text" id="editInput" required />
+        </div>
+        <button class="button primary full" type="submit">
+          <i data-lucide="check"></i> 保存修改
+        </button>
+      </form>
+    </section>
+
+    <div class="toast" id="toast" role="status"><i data-lucide="check-circle-2"></i><span>已保存</span></div>
+  </body>
+</html>
