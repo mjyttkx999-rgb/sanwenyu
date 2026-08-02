@@ -1,0 +1,9 @@
+{
+  "name": "shiguang-workbench-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "拾光工作台 —— 每日总结、任务、记账、内容灵感与文档归档的一体化手机 PWA 工作台",
+  "scripts": {
+    "dev": "node dev-server.js"
+  }
+}
