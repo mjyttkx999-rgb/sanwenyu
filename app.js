@@ -29,6 +29,21 @@ const poems = [
   },
 ];
 
+const xhsPoetryInspirations = [
+  { theme: "山水治愈", title: "明月松间照", excerpt: "清泉石上流 · 王维", keyword: "山水治愈 古诗词 意境" },
+  { theme: "江南烟雨", title: "多少楼台烟雨中", excerpt: "南朝四百八十寺 · 杜牧", keyword: "江南烟雨 古诗词 意境" },
+  { theme: "月色思念", title: "海上生明月", excerpt: "天涯共此时 · 张九龄", keyword: "月色思念 古诗词 文案" },
+  { theme: "人间清醒", title: "坐看云起时", excerpt: "行到水穷处 · 王维", keyword: "人间清醒 古诗词 意境" },
+];
+
+const focusRiddles = [
+  "越忙越有空？\n答案：明天。",
+  "待办为何多？\n因为会繁殖。",
+  "计划很完整，\n就是没开始。",
+  "先做重要的，\n不急的装急。",
+  "灵感去哪了？\n它去洗澡了。",
+];
+
 const copyItems = [
   { category: "美食", label: "烟火气", text: "认真吃饭，是生活写给普通日子的情书。今日份快乐，藏在热气腾腾的一餐里。", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1000&q=85", heat: "2.4w 灵感" },
   { category: "旅行", label: "去远方", text: "出发的意义，不是逃离日常，而是带着新的目光重新回来。山川湖海，替我松开了生活的褶皱。", image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1000&q=85", heat: "1.8w 灵感" },
@@ -42,13 +57,21 @@ const defaultFiles = [
   { id: 3, name: "品牌文案规范V3.docx", type: "DOC", tag: "品牌资料", size: "640 KB" },
 ];
 
-const DEFAULT_USER = {
-  name: "林夏",
-  role: "内容运营组 · 负责人",
-  email: "linxia@example.com",
-  joinedAt: "2024年3月",
-  avatar: null,
-};
+const defaultProfile = { name: "林夏", role: "内容运营组 · 负责人" };
+const defaultMembers = [
+  { id: 1, name: "周岚", detail: "已完成 4 项 · 无卡点", status: "已提交", color: "#427f72" },
+  { id: 2, name: "陈野", detail: "已完成 3 项 · 1 个卡点", status: "已提交", color: "#b66b4e" },
+  { id: 3, name: "苏木", detail: "已完成 5 项 · 无卡点", status: "已提交", color: "#536d91" },
+  { id: 4, name: "安宁", detail: "尚未提交今日总结", status: "待提交", color: "#9b667b", waiting: true },
+  { id: 5, name: "许川", detail: "已完成 2 项 · 1 个卡点", status: "已提交", color: "#6c7450" },
+  { id: 6, name: "方可", detail: "尚未提交今日总结", status: "待提交", color: "#8a7463", waiting: true },
+];
+
+const defaultProjects = [
+  { id: 1, name: "七夕整合营销", progress: 78, blocker: "等待品牌方确认终版视觉，预计今天 18:00 前反馈。", people: "林夏 · 陈野", due: "8月4日" },
+  { id: 2, name: "8月达人矩阵", progress: 56, blocker: "腰部达人报价超出预算 12%，需要调整组合。", people: "周岚 · 许川", due: "8月8日" },
+  { id: 3, name: "私域内容焕新", progress: 52, blocker: "", people: "苏木 · 方可", due: "8月12日" },
+];
 
 const store = {
   get(key, fallback) {
@@ -57,49 +80,41 @@ const store = {
   set(key, value) { localStorage.setItem(key, JSON.stringify(value)); },
 };
 
-function getUserName() {
-  const user = store.get("sg_user", null);
-  return user?.name || DEFAULT_USER.name;
-}
-
-function getUserRole() {
-  const user = store.get("sg_user", null);
-  return user?.role || DEFAULT_USER.role;
-}
-
-function getUserEmail() {
-  const user = store.get("sg_user", null);
-  return user?.email || DEFAULT_USER.email;
-}
-
-function getUserInitials() {
-  return getInitials(getUserName());
-}
-
-function getInitials(name) {
-  if (!name) return "?";
-  return name.charAt(0);
-}
-
 let tasks = store.get("shiguang_tasks", defaultTasks);
 let transactions = store.get("shiguang_transactions", defaultTransactions);
 let files = store.get("shiguang_files", defaultFiles);
+let profile = store.get("shiguang_profile", defaultProfile);
+let teamMembers = store.get("shiguang_members", defaultMembers);
+let projects = store.get("shiguang_projects", defaultProjects);
+let summaries = store.get("shiguang_summaries", []);
 let currentFilter = "all";
 let activeModule = "";
 let poemIndex = Number(store.get("shiguang_poem", 0)) || 0;
-let currentSheetCallback = null;
+
+function submittedMemberCount() {
+  return Math.min(teamMembers.length, teamMembers.filter((item) => item.status === "已提交").length + (summaries[0] ? 1 : 0));
+}
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 function init() {
   setDate();
+  renderFocusRiddle();
+  renderProfile();
   renderTasks();
   updateTaskStats();
-  renderUserInfo();
+  checkDueReminders();
   bindEvents();
   registerServiceWorker();
+  window.setInterval(checkDueReminders, 60 * 1000);
   if (window.lucide) lucide.createIcons();
+  if (location.hash === "#daily-summary") window.setTimeout(showSummaryForm, 180);
+}
+
+function renderFocusRiddle() {
+  const dayIndex = new Date().getDate() % focusRiddles.length;
+  $("#focusRiddle").textContent = focusRiddles[dayIndex];
 }
 
 function registerServiceWorker() {
@@ -114,15 +129,23 @@ function setDate() {
   const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
   $("#todayDate").textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${weekdays[now.getDay()]}`;
   const hour = now.getHours();
-  const greeting = hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好";
-  const name = getUserName();
-  const titleEl = $("#pageTitle");
-  const nameEl = $("#greetingName");
-  if (nameEl) {
-    nameEl.textContent = name;
-  } else if (titleEl) {
-    titleEl.textContent = `${greeting}，${name}`;
-  }
+  $("#pageTitle").textContent = `${hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好"}，${profile.name}`;
+}
+
+function getInitials(name) {
+  const clean = String(name || "拾光").trim();
+  return clean.length <= 2 ? clean : clean.slice(0, 2);
+}
+
+function renderProfile() {
+  const initials = getInitials(profile.name);
+  $("#profileInitials").textContent = initials;
+  $("#profileAvatar").textContent = initials;
+  $("#profileName").textContent = profile.name;
+  $("#profileRole").textContent = profile.role;
+  $("#teamSummary").textContent = `内容运营组 · ${teamMembers.length} 人`;
+  const submittedCount = submittedMemberCount();
+  $("#summaryStatus").textContent = `团队 ${submittedCount}/${teamMembers.length} 已提交`;
 }
 
 function bindEvents() {
@@ -148,71 +171,19 @@ function bindEvents() {
   });
 
   $("#sheetBackdrop").addEventListener("click", closeAllSheets);
-
-  // 个人工作台事件
-  $("#editNameBtn")?.addEventListener("click", enterNameEditMode);
-  $("#saveNameBtn")?.addEventListener("click", saveUserName);
-  $("#cancelNameBtn")?.addEventListener("click", exitNameEditMode);
-  $("#nameInput")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") saveUserName();
-    if (e.key === "Escape") exitNameEditMode();
-  });
-  $("#avatarEditBtn")?.addEventListener("click", () => $("#avatarInput")?.click());
-  $("#avatarInput")?.addEventListener("change", handleAvatarChange);
-  $("#editRoleBtn")?.addEventListener("click", () => {
-    openEditSheet({
-      kicker: "职位信息",
-      title: "修改职位",
-      label: "职位描述",
-      value: getUserRole(),
-      maxLength: 30,
-      onSave: (value) => {
-        const user = { ...(store.get("sg_user", null) || { ...DEFAULT_USER }) };
-        user.role = value.trim();
-        store.set("sg_user", user);
-        renderUserInfo();
-        showToast("职位信息已更新");
-      },
-    });
-  });
-  $("#editEmailBtn")?.addEventListener("click", () => {
-    openEditSheet({
-      kicker: "邮箱地址",
-      title: "修改邮箱",
-      label: "邮箱",
-      value: getUserEmail(),
-      maxLength: 50,
-      type: "email",
-      onSave: (value) => {
-        const email = value.trim();
-        if (email && !isValidEmail(email)) {
-          showToast("请输入有效的邮箱地址");
-          return false;
-        }
-        const user = { ...(store.get("sg_user", null) || { ...DEFAULT_USER }) };
-        user.email = email;
-        store.set("sg_user", user);
-        renderUserInfo();
-        showToast("邮箱已更新");
-        return true;
-      },
-    });
-  });
-  $("#editForm")?.addEventListener("submit", handleSheetSubmit);
 }
 
 function navigate(view) {
   $$(".view").forEach((section) => section.classList.toggle("active", section.dataset.view === view));
   $$(".bottom-nav [data-route]").forEach((button) => button.classList.toggle("active", button.dataset.route === view));
-  const titles = { home: greetingTitle(), tasks: "任务清单", tools: "效率工具", mine: "个人空间", profile: "我的资料" };
-  $("#pageTitle").textContent = titles[view] || "";
+  const titles = { home: greetingTitle(), tasks: "任务清单", tools: "效率工具", mine: "个人空间" };
+  $("#pageTitle").textContent = titles[view];
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function greetingTitle() {
   const hour = new Date().getHours();
-  const greeting = hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好";
-  return `${greeting}，${getUserName()}`;
+  return `${hour < 11 ? "早上好" : hour < 14 ? "中午好" : hour < 18 ? "下午好" : "晚上好"}，${profile.name}`;
 }
 
 function renderTasks() {
@@ -268,7 +239,18 @@ function toggleTask(id) {
   store.set("shiguang_tasks", tasks);
   renderTasks();
   updateTaskStats();
-  showToast(tasks.find((task) => task.id === id).done ? "任务已完成" : "已恢复任务");
+  checkDueReminders();
+  const completed = tasks.find((task) => task.id === id).done;
+  if (completed) celebrateTask();
+  showToast(completed ? "任务已完成" : "已恢复任务");
+}
+
+function celebrateTask() {
+  const burst = $("#celebrationBurst");
+  burst.classList.remove("show");
+  void burst.offsetWidth;
+  burst.classList.add("show");
+  window.setTimeout(() => burst.classList.remove("show"), 850);
 }
 
 function openModule(module) {
@@ -291,36 +273,35 @@ function renderModule(module) {
 }
 
 function renderSummary() {
+  const latestSummary = summaries[0];
+  const submittedCount = submittedMemberCount();
+  $("#summaryStatus").textContent = `团队 ${submittedCount}/${teamMembers.length} 已提交`;
   $("#sheetContent").innerHTML = `
-    <div class="summary-stats"><div class="highlight"><span>提交进度</span><strong>6 / 8</strong></div><div><span>已完成任务</span><strong>23</strong></div><div><span>团队卡点</span><strong>2</strong></div></div>
+    <div class="summary-stats"><div class="highlight"><span>提交进度</span><strong>${submittedCount} / ${teamMembers.length}</strong></div><div><span>已完成任务</span><strong>${latestSummary ? latestSummary.doneCount : 23}</strong></div><div><span>团队卡点</span><strong>${latestSummary ? latestSummary.blockerCount : 2}</strong></div></div>
     <div class="action-row"><button class="button primary" data-action="share-summary"><i data-lucide="send"></i> 发送填写链接</button><button class="button secondary" data-action="submit-summary"><i data-lucide="file-pen-line"></i> 填写我的总结</button></div>
     <section class="sheet-section"><div class="sheet-section-head"><h3>团队提交情况</h3><span>更新于 16:42</span></div><div class="member-list">
-      ${member("周岚", "已完成 4 项 · 无卡点", "已提交", "#427f72")}
-      ${member("陈野", "已完成 3 项 · 1 个卡点", "已提交", "#b66b4e")}
-      ${member("苏木", "已完成 5 项 · 无卡点", "已提交", "#536d91")}
-      ${member("安宁", "尚未提交今日总结", "待提交", "#9b667b", true)}
-      ${member("许川", "已完成 2 项 · 1 个卡点", "已提交", "#6c7450")}
-      ${member("方可", "尚未提交今日总结", "待提交", "#8a7463", true)}
+      ${teamMembers.map((item) => member(item.name, item.detail, item.status, item.color, item.waiting)).join("")}
     </div></section>
+    ${latestSummary ? `<section class="sheet-section"><div class="sheet-section-head"><h3>我的最新总结</h3><span>${latestSummary.createdLabel}</span></div><div class="summary-preview"><strong>完成</strong><p>${escapeHtml(latestSummary.done)}</p><strong>卡点</strong><p>${escapeHtml(latestSummary.blocker || "无")}</p><strong>明日计划</strong><p>${escapeHtml(latestSummary.next || "未填写")}</p></div></section>` : ""}
     <section class="sheet-section"><div class="sheet-section-head"><h3>完成趋势</h3><span>近 7 天</span></div><div class="week-chart"><div><i style="--h:55%"></i><span>一</span></div><div><i style="--h:70%"></i><span>二</span></div><div><i style="--h:62%"></i><span>三</span></div><div><i style="--h:88%"></i><span>四</span></div><div class="today"><i style="--h:75%"></i><span>五</span></div><div><i style="--h:28%"></i><span>六</span></div><div><i style="--h:18%"></i><span>日</span></div></div></section>`;
 }
 
 function member(name, detail, status, color, waiting = false) {
-  return `<div class="member-row"><span class="member-avatar" style="--avatar:${color}">${name.slice(-1)}</span><span><strong>${name}</strong><small>${detail}</small></span><b class="status-pill ${waiting ? "waiting" : ""}">${status}</b></div>`;
+  return `<div class="member-row"><span class="member-avatar" style="--avatar:${escapeHtml(color)}">${escapeHtml(name.slice(-1))}</span><span><strong>${escapeHtml(name)}</strong><small>${escapeHtml(detail)}</small></span><b class="status-pill ${waiting ? "waiting" : ""}">${escapeHtml(status)}</b></div>`;
 }
 
 function renderProgress() {
+  const blockerCount = projects.filter((item) => item.blocker).length;
+  const average = projects.length ? Math.round(projects.reduce((sum, item) => sum + Number(item.progress || 0), 0) / projects.length) : 0;
   $("#sheetContent").innerHTML = `
-    <div class="summary-stats"><div class="highlight"><span>进行中</span><strong>3</strong></div><div><span>平均进度</span><strong>62%</strong></div><div><span>待解卡点</span><strong>2</strong></div></div>
+    <div class="summary-stats"><div class="highlight"><span>进行中</span><strong>${projects.length}</strong></div><div><span>平均进度</span><strong>${average}%</strong></div><div><span>待解卡点</span><strong>${blockerCount}</strong></div></div>
     <section class="sheet-section"><div class="sheet-section-head"><h3>项目进展</h3><button class="text-button" data-action="add-progress">新增任务 <i data-lucide="plus"></i></button></div>
-      ${project("七夕整合营销", 78, "等待品牌方确认终版视觉，预计今天 18:00 前反馈。", "林夏 · 陈野", "8月4日")}
-      ${project("8月达人矩阵", 56, "腰部达人报价超出预算 12%，需要调整组合。", "周岚 · 许川", "8月8日")}
-      ${project("私域内容焕新", 52, "", "苏木 · 方可", "8月12日")}
+      ${projects.map((item) => project(item.name, item.progress, item.blocker, item.people, item.due)).join("")}
     </section>`;
 }
 
 function project(name, progress, blocker, people, due) {
-  return `<article class="progress-project"><div class="project-top"><h3>${name}</h3><span>${progress}%</span></div><div class="progress-track"><i style="--w:${progress}%"></i></div>${blocker ? `<div class="blocker"><i data-lucide="triangle-alert"></i><span>${blocker}</span></div>` : ""}<div class="project-meta"><span>${people}</span><span>截止 ${due}</span></div></article>`;
+  return `<article class="progress-project"><div class="project-top"><h3>${escapeHtml(name)}</h3><span>${Number(progress) || 0}%</span></div><div class="progress-track"><i style="--w:${Number(progress) || 0}%"></i></div>${blocker ? `<div class="blocker"><i data-lucide="triangle-alert"></i><span>${escapeHtml(blocker)}</span></div>` : ""}<div class="project-meta"><span>${escapeHtml(people)}</span><span>截止 ${escapeHtml(due)}</span></div></article>`;
 }
 
 function renderLedger() {
@@ -349,8 +330,16 @@ function renderPoetry() {
   const poem = poems[poemIndex % poems.length];
   $("#sheetContent").innerHTML = `
     <div class="poem-hero"><img src="${poem.image}" alt="${poem.title}意境图"><div class="poem-text"><h3>${poem.title}</h3><p class="author">${poem.author}</p><p class="poem-lines">${poem.lines}</p></div></div>
-    <div class="action-row"><button class="button dark" data-action="next-poem"><i data-lucide="refresh-cw"></i> 换一首</button><button class="button secondary" data-copy="${encodeURIComponent(poem.title + "\n" + poem.lines.replace(/<br>/g,"\n"))}"><i data-lucide="share-2"></i> 分享诗句</button></div>
-    <div class="analysis-block"><h4>诗意今译</h4><p>${poem.translation}</p></div><div class="analysis-block"><h4>一句赏析</h4><p>${poem.insight}</p></div>`;
+    <div class="action-row"><button class="button dark" data-action="next-poem"><i data-lucide="refresh-cw"></i> 换一首</button><button class="button secondary" data-action="share-poem"><i data-lucide="share-2"></i> 分享诗句</button></div>
+    <p class="share-hint"><i data-lucide="smartphone"></i>系统面板可选择微信联系人、朋友圈或小红书</p>
+    <div class="analysis-block"><h4>诗意今译</h4><p>${poem.translation}</p></div><div class="analysis-block"><h4>一句赏析</h4><p>${poem.insight}</p></div>
+    <section class="sheet-section xhs-poetry-section"><div class="sheet-section-head"><h3>小红书热门意境</h3><span>按主题发现</span></div><div class="xhs-poetry-scroll">${xhsPoetryInspirations.map(xhsPoetryCard).join("")}</div></section>`;
+  refreshIcons();
+}
+
+function xhsPoetryCard(item) {
+  const url = `https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(item.keyword)}&source=web_explore_feed`;
+  return `<a class="xhs-poetry-card" href="${url}" target="_blank" rel="noopener noreferrer"><span class="xhs-poetry-label"><i data-lucide="flame"></i>${escapeHtml(item.theme)}</span><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.excerpt)}</p><span class="xhs-poetry-link">去小红书看看 <i data-lucide="arrow-up-right"></i></span></a>`;
 }
 
 function renderDocs() {
@@ -363,63 +352,6 @@ function renderDocs() {
 
 function fileRow(file) {
   return `<div class="file-row"><span class="file-type">${escapeHtml(file.type)}</span><span><strong>${escapeHtml(file.name)}</strong><small>${escapeHtml(file.size)} <b class="tag">${escapeHtml(file.tag)}</b></small></span><i data-lucide="more-vertical"></i></div>`;
-}
-
-function renderUserInfo() {
-  const user = store.get("sg_user", null) || { ...DEFAULT_USER };
-  const name = getUserName();
-  const role = getUserRole();
-  const email = getUserEmail();
-  const initials = getUserInitials();
-
-  // 顶部问候名
-  const greetingEl = $("#greetingName");
-  if (greetingEl) greetingEl.textContent = name;
-
-  // 顶部头像
-  const avatarEl = $("#avatarInitial");
-  if (avatarEl) avatarEl.textContent = initials;
-
-  // 我的页面
-  const mineName = $("#mineName");
-  if (mineName) mineName.textContent = name;
-
-  const mineRole = $("#mineRole");
-  if (mineRole) mineRole.textContent = role;
-
-  const mineAvatar = $("#mineAvatar");
-  if (mineAvatar) setAvatarOrInitials(mineAvatar, user.avatar, initials);
-
-  // 个人资料页
-  const userNameEl = $("#userName");
-  if (userNameEl) userNameEl.textContent = name;
-
-  const profileAvatar = $("#profileAvatar");
-  if (profileAvatar) setAvatarOrInitials(profileAvatar, user.avatar, initials);
-
-  const userRoleEl = $("#userRole");
-  if (userRoleEl) userRoleEl.textContent = role;
-
-  const roleTextEl = $("#roleText");
-  if (roleTextEl) roleTextEl.textContent = role;
-
-  const userEmailEl = $("#userEmail");
-  if (userEmailEl) userEmailEl.textContent = email;
-
-  const emailTextEl = $("#emailText");
-  if (emailTextEl) emailTextEl.textContent = email;
-}
-
-function setAvatarOrInitials(el, avatar, fallbackText) {
-  if (avatar) {
-    el.style.backgroundImage = `url(${avatar})`;
-    el.classList.add("has-image");
-    el.textContent = "";
-  } else {
-    el.style.backgroundImage = "";
-    el.classList.remove("has-image");
-    el.textContent = fallbackText;
-  }
 }
 
 function handleAction(action) {
@@ -435,11 +367,14 @@ function handleAction(action) {
     "add-expense": () => showMoneyForm("支出"),
     "add-income": () => showMoneyForm("收入"),
     "next-poem": nextPoem,
+    "share-poem": sharePoem,
     "choose-file": () => $("#fileInput")?.click(),
-    "wps-sync": () => showToast("已生成 WPS 授权流程演示"),
+    "wps-sync": showWpsStatus,
+    "edit-profile": showProfileForm,
+    "edit-team": showTeamForm,
+    "reminder-settings": showReminderSettings,
+    "enable-notifications": enableNotifications,
     "open-profile": () => navigate("mine"),
-    "open-profile-page": () => navigate("profile"),
-    "back-to-mine": () => navigate("mine"),
   };
   actions[action]?.();
 }
@@ -454,7 +389,6 @@ function closeAllSheets() {
   $("#sheetBackdrop").classList.remove("visible");
   $$(".bottom-sheet").forEach((sheet) => sheet.classList.remove("open"));
   document.body.style.overflow = "";
-  currentSheetCallback = null;
 }
 
 function showTodoForm() {
@@ -474,27 +408,153 @@ function submitTodo(event) {
   event.preventDefault();
   const data = new FormData(event.currentTarget);
   const dueValue = data.get("due");
-  tasks.unshift({ id: Date.now(), title: data.get("title").trim(), priority: data.get("priority"), due: dueValue ? formatDue(dueValue) : "未设置时间", reminder: data.get("reminder"), done: false });
+  const reminder = String(data.get("reminder"));
+  tasks.unshift({ id: Date.now(), title: data.get("title").trim(), priority: data.get("priority"), due: dueValue ? formatDue(dueValue) : "未设置时间", dueAt: dueValue || "", reminder, reminderMinutes: reminderToMinutes(reminder), done: false });
   store.set("shiguang_tasks", tasks);
   renderTasks();
   updateTaskStats();
+  checkDueReminders();
   closeAllSheets();
   navigate("tasks");
   showToast("待办已创建");
 }
 
+function reminderToMinutes(value) {
+  if (value === "提前 1 小时") return 60;
+  if (value === "提前 1 天") return 24 * 60;
+  if (value === "提前 30 分钟") return 30;
+  return 0;
+}
+
 function showSummaryForm() {
   $("#formTitle").textContent = "填写今日总结";
-  $("#entryForm").innerHTML = `<div class="field"><label>今日完成</label><textarea name="done" placeholder="列出今天完成的重点任务" required></textarea></div><div class="field"><label>遇到的卡点</label><textarea name="blocker" placeholder="没有卡点可填写“无”"></textarea></div><div class="field"><label>明日计划</label><textarea name="next" placeholder="明天优先推进什么？"></textarea></div><button class="button primary full" type="submit"><i data-lucide="send"></i> 提交总结</button>`;
-  $("#entryForm").onsubmit = (event) => { event.preventDefault(); closeAllSheets(); showToast("今日总结已提交"); };
+  const latest = summaries[0] || {};
+  $("#entryForm").innerHTML = `<div class="field"><label for="summaryDone">今日完成</label><textarea id="summaryDone" name="done" placeholder="列出今天完成的重点任务" required>${escapeHtml(latest.done || "")}</textarea></div><div class="field"><label for="summaryBlocker">遇到的卡点</label><textarea id="summaryBlocker" name="blocker" placeholder="没有卡点可填写“无”">${escapeHtml(latest.blocker || "")}</textarea></div><div class="field"><label for="summaryNext">明日计划</label><textarea id="summaryNext" name="next" placeholder="明天优先推进什么？">${escapeHtml(latest.next || "")}</textarea></div><button class="button primary full" type="submit"><i data-lucide="send"></i> 提交总结</button>`;
+  $("#entryForm").onsubmit = submitSummary;
   openSheet("formSheet"); refreshIcons();
+}
+
+function submitSummary(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const done = String(data.get("done") || "").trim();
+  if (!done) return;
+  const blocker = String(data.get("blocker") || "").trim();
+  const summary = {
+    id: Date.now(),
+    done,
+    blocker,
+    next: String(data.get("next") || "").trim(),
+    doneCount: done.split(/[,，、\n]/).map((item) => item.trim()).filter(Boolean).length,
+    blockerCount: blocker && blocker !== "无" ? 1 : 0,
+    createdAt: new Date().toISOString(),
+    createdLabel: "刚刚",
+  };
+  summaries = [summary, ...summaries.filter((item) => new Date(item.createdAt).toDateString() !== new Date().toDateString())];
+  store.set("shiguang_summaries", summaries);
+  closeAllSheets();
+  showToast("今日总结已保存");
+  setTimeout(() => openModule("summary"), 180);
 }
 
 function showProgressForm() {
   $("#formTitle").textContent = "新增进行中任务";
-  $("#entryForm").innerHTML = `<div class="field"><label>任务名称</label><input name="title" placeholder="输入任务名称" required></div><div class="field"><label>当前进度</label><input name="progress" type="range" min="0" max="100" value="30"></div><div class="field"><label>当前卡点</label><textarea name="blocker" placeholder="描述需要协助解决的问题"></textarea></div><button class="button primary full" type="submit">保存任务进度</button>`;
-  $("#entryForm").onsubmit = (event) => { event.preventDefault(); closeAllSheets(); showToast("进行中任务已保存"); };
-  openSheet("formSheet");
+  $("#entryForm").innerHTML = `<div class="field"><label for="progressTitle">任务名称</label><input id="progressTitle" name="title" placeholder="输入任务名称" required></div><div class="field"><label for="progressValue">当前进度 <output id="progressOutput">30%</output></label><input id="progressValue" name="progress" type="range" min="0" max="100" value="30"></div><div class="field"><label for="progressBlocker">当前卡点</label><textarea id="progressBlocker" name="blocker" placeholder="描述需要协助解决的问题"></textarea></div><div class="field"><label for="progressPeople">协作成员</label><input id="progressPeople" name="people" placeholder="例如：${escapeHtml(profile.name)} · 周岚"></div><div class="field"><label for="progressDue">截止时间</label><input id="progressDue" name="due" placeholder="例如：8月15日"></div><button class="button primary full" type="submit">保存任务进度</button>`;
+  $("#progressValue").addEventListener("input", (event) => { $("#progressOutput").textContent = `${event.target.value}%`; });
+  $("#entryForm").onsubmit = submitProgress;
+  openSheet("formSheet"); refreshIcons();
+}
+
+function submitProgress(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const title = String(data.get("title") || "").trim();
+  if (!title) return;
+  projects = [{
+    id: Date.now(), name: title, progress: Number(data.get("progress")) || 0,
+    blocker: String(data.get("blocker") || "").trim(), people: String(data.get("people") || profile.name).trim(),
+    due: String(data.get("due") || "未设置").trim(),
+  }, ...projects];
+  store.set("shiguang_projects", projects);
+  closeAllSheets();
+  showToast("进行中任务已保存");
+  setTimeout(() => openModule("progress"), 180);
+}
+
+function showProfileForm() {
+  $("#formTitle").textContent = "编辑个人资料";
+  $("#entryForm").innerHTML = `<div class="field"><label for="profileNameInput">用户名</label><input id="profileNameInput" name="name" maxlength="12" value="${escapeHtml(profile.name)}" required></div><div class="field"><label for="profileRoleInput">职位 / 小组</label><input id="profileRoleInput" name="role" maxlength="24" value="${escapeHtml(profile.role)}" required></div><button class="button primary full" type="submit"><i data-lucide="check"></i> 保存个人资料</button>`;
+  $("#entryForm").onsubmit = submitProfile;
+  openSheet("formSheet"); refreshIcons();
+}
+
+function submitProfile(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const name = String(data.get("name") || "").trim();
+  const role = String(data.get("role") || "").trim();
+  if (!name || !role) return;
+  profile = { name, role };
+  store.set("shiguang_profile", profile);
+  renderProfile();
+  setDate();
+  closeAllSheets();
+  showToast("个人资料已更新");
+}
+
+function showTeamForm() {
+  $("#formTitle").textContent = "修改团队成员";
+  $("#entryForm").innerHTML = `<p class="form-note">修改成员名称后，每日总结中的团队提交列表会同步更新。</p>${teamMembers.map((item) => `<div class="field"><label for="member-${item.id}">成员 ${item.id}</label><input id="member-${item.id}" name="member-${item.id}" maxlength="12" value="${escapeHtml(item.name)}" required></div>`).join("")}<button class="button primary full" type="submit"><i data-lucide="users"></i> 保存成员名称</button>`;
+  $("#entryForm").onsubmit = submitTeam;
+  openSheet("formSheet"); refreshIcons();
+}
+
+function submitTeam(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  teamMembers = teamMembers.map((item) => ({ ...item, name: String(data.get(`member-${item.id}`) || item.name).trim() || item.name }));
+  store.set("shiguang_members", teamMembers);
+  renderProfile();
+  closeAllSheets();
+  showToast("团队成员名称已更新");
+}
+
+function showReminderSettings() {
+  const supported = "Notification" in window;
+  const status = supported ? (Notification.permission === "granted" ? "系统提醒已开启" : "系统提醒尚未开启") : "当前浏览器不支持系统提醒";
+  $("#formTitle").textContent = "提醒设置";
+  $("#entryForm").innerHTML = `<p class="form-note">${status}。应用打开时会检查设置了截止时间的待办；iPhone 需要允许通知后才能显示系统提醒。</p><button class="button primary full" type="button" data-action="enable-notifications">开启系统提醒</button><button class="button secondary full" type="button" data-action="close-form">完成</button>`;
+  openSheet("formSheet"); refreshIcons();
+}
+
+async function enableNotifications() {
+  if (!("Notification" in window)) { showToast("当前浏览器不支持系统提醒"); return; }
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") { store.set("shiguang_notifications", true); showToast("系统提醒已开启"); closeAllSheets(); checkDueReminders(); }
+  else showToast("未获得通知权限");
+}
+
+function checkDueReminders() {
+  const now = Date.now();
+  const notified = store.get("shiguang_notified", {});
+  let changed = false;
+  tasks.forEach((task) => {
+    if (task.done || !task.dueAt || !task.reminderMinutes) return;
+    const reminderAt = new Date(task.dueAt).getTime() - task.reminderMinutes * 60 * 1000;
+    if (reminderAt <= now && now - reminderAt < 24 * 60 * 60 * 1000 && !notified[task.id]) {
+      notified[task.id] = true;
+      changed = true;
+      if (window.Notification?.permission === "granted") new Notification("拾光待办提醒", { body: `${task.title} · ${task.due}` });
+      else showToast(`待办提醒：${task.title}`);
+    }
+  });
+  if (changed) store.set("shiguang_notified", notified);
+}
+
+function showWpsStatus() {
+  $("#formTitle").textContent = "连接 WPS";
+  $("#entryForm").innerHTML = `<p class="form-note">WPS 同步需要 WPS 开放平台的应用 ID、授权回调地址和 OAuth 授权。当前版本已经完成本地文档归档，尚未配置你的 WPS 应用凭据，因此不会伪造“已同步”。</p><div class="field"><label>当前状态</label><input value="待授权配置" readonly></div><button class="button secondary full" type="button" data-action="close-form">知道了</button>`;
+  openSheet("formSheet"); refreshIcons();
 }
 
 function showMoneyForm(type) {
@@ -543,6 +603,27 @@ async function shareSummary() {
   }
 }
 
+async function sharePoem() {
+  const poem = poems[poemIndex % poems.length];
+  const text = `${poem.title}\n${poem.author}\n${poem.lines.replace(/<br>/g, "\n")}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `每日诗词 · ${poem.title}`,
+        text,
+      });
+      showToast("已打开分享面板");
+      return;
+    }
+
+    await navigator.clipboard.writeText(text);
+    showToast("诗句已复制，可粘贴到微信或小红书");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("分享未完成，请重试");
+  }
+}
+
 function nextPoem() {
   poemIndex = (poemIndex + 1) % poems.length;
   store.set("shiguang_poem", poemIndex);
@@ -578,102 +659,6 @@ function fileExtension(name) { const ext = name.split(".").pop().toUpperCase(); 
 function guessTag(name) { if (/复盘|报告/.test(name)) return "项目复盘"; if (/数据|表/.test(name)) return "运营数据"; if (/图片|素材|海报/.test(name)) return "视觉素材"; return "待整理"; }
 function escapeHtml(value) { const div = document.createElement("div"); div.textContent = String(value); return div.innerHTML; }
 function refreshIcons() { if (window.lucide) lucide.createIcons(); }
-
-// ===== 个人工作台相关函数 =====
-
-function enterNameEditMode() {
-  const display = $("#nameDisplay");
-  const edit = $("#nameEdit");
-  const input = $("#nameInput");
-  display.hidden = true;
-  edit.hidden = false;
-  input.value = getUserName();
-  input.focus();
-  input.select();
-}
-
-function exitNameEditMode() {
-  const display = $("#nameDisplay");
-  const edit = $("#nameEdit");
-  display.hidden = false;
-  edit.hidden = true;
-}
-
-function saveUserName() {
-  const input = $("#nameInput");
-  const newName = input.value.trim();
-  if (!newName) {
-    showToast("用户名不能为空");
-    input.focus();
-    return;
-  }
-  if (newName.length > 12) {
-    showToast("用户名最多 12 个字符");
-    input.focus();
-    return;
-  }
-  const user = { ...(store.get("sg_user", null) || { ...DEFAULT_USER }) };
-  user.name = newName;
-  store.set("sg_user", user);
-  renderUserInfo();
-  exitNameEditMode();
-  showToast("用户名已更新");
-}
-
-function handleAvatarChange(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    showToast("请选择图片文件");
-    return;
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    showToast("图片大小不能超过 5MB");
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const user = { ...(store.get("sg_user", null) || { ...DEFAULT_USER }) };
-    user.avatar = e.target.result;
-    store.set("sg_user", user);
-    renderUserInfo();
-    showToast("头像已更新");
-    refreshIcons();
-  };
-  reader.readAsDataURL(file);
-  event.target.value = "";
-}
-
-function openEditSheet({ kicker, title, label, value, maxLength = 50, type = "text", onSave }) {
-  $("#editSheetKicker").textContent = kicker;
-  $("#editSheetTitle").textContent = title;
-  $("#editLabel").textContent = label;
-  const input = $("#editInput");
-  input.type = type;
-  input.value = value;
-  input.maxLength = maxLength;
-  currentSheetCallback = onSave;
-  openSheet("editSheet");
-  setTimeout(() => input.focus(), 300);
-}
-
-function closeEditSheet() {
-  closeAllSheets();
-}
-
-function handleSheetSubmit(event) {
-  event.preventDefault();
-  if (!currentSheetCallback) return;
-  const value = $("#editInput").value;
-  const result = currentSheetCallback(value);
-  if (result !== false) {
-    closeEditSheet();
-  }
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 window.closeAllSheets = closeAllSheets;
 window.openModule = openModule;
